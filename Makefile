@@ -1,4 +1,4 @@
-GOPATH := $(PWD)/.build
+export GOPATH := $(PWD)/.build
 PPATH := github.com/artyom/logpump
 TMPSRC := $(GOPATH)/src/$(PPATH)
 
