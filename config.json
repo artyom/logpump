@@ -2,6 +2,7 @@
 	{
 		"Pattern": "/tmp/log/log*",
 		"Statefile": "/tmp/state.json",
+		"Category": "test",
 		"Prefix": "SomePrefix"
 	},
 	{

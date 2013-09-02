@@ -67,6 +67,9 @@ func Feeder(cfg Cfg, l chan<- *Msg, done chan<- bool) {
 	// lines and doInit are channels
 	lines, doInit, shouldFinish := NewLineEmitter(cfg)
 	msg := NewMsg("")
+	if cfg.Category != "" {
+		msg.Category = cfg.Category
+	}
 
 FEEDING_LOOP:
 	for {
@@ -205,7 +208,6 @@ func Scriber(host string, port uint, l <-chan *Msg) {
 
 	ticker := time.Tick(time.Second * 10)
 	logentry := scribe.NewLogEntry()
-	logentry.Category = "default"
 	messages := []*scribe.LogEntry{logentry}
 	for {
 		select {
@@ -213,6 +215,7 @@ func Scriber(host string, port uint, l <-chan *Msg) {
 			// push messages to scribe here, handle reconnections, etc.
 			// fmt.Print(msg.Text)
 			logentry.Message = msg.Text
+			logentry.Category = msg.Category
 		SENDLOOP:
 			for {
 				for i := 0; i < 10; i++ {
@@ -276,12 +279,13 @@ func Scriber(host string, port uint, l <-chan *Msg) {
 }
 
 type Msg struct {
-	Text   string
-	Status chan status
+	Text     string
+	Category string
+	Status   chan status
 }
 
 func NewMsg(s string) *Msg {
-	return &Msg{s, make(chan status)}
+	return &Msg{s, "default", make(chan status)}
 }
 
 type status int
@@ -291,6 +295,7 @@ const OK, FAIL status = 0, 1
 type Cfg struct {
 	Pattern   string
 	Statefile string
+	Category  string
 	Prefix    string
 }
 

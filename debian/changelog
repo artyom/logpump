@@ -1,3 +1,9 @@
+logpump (0.1.3) unstable; urgency=low
+
+  * Per-pattern category support.
+
+ -- Artyom Pervukhin <artyom@evasive.ru>  Mon, 02 Sep 2013 19:30:48 +0400
+
 logpump (0.1.2) unstable; urgency=low
 
   * Per-pattern prefix support.
