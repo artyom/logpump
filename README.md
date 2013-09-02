@@ -33,6 +33,5 @@ This configuration tells logpump to watch for messages in files `/var/log/messag
 
 ## Bugs
 
-* If one of the watched files is empty, logpump would exit as it cannot calculate its signature. Supposed fix: skip empty files.
 
 [Scribe]: https://github.com/facebook/scribe

@@ -419,14 +419,24 @@ func (lr *LogReader) Init() (err error) {
 
 // get signature from open files
 func (lr *LogReader) getSignatures() (err error) {
+
+	var nonEmptyFiles []*fileMeta
+
 	for _, fm := range lr.files {
 		sig, err := getSignature(fm.file)
+		if err == io.EOF {
+			log.Printf("Skipping empty file %s", fm.file.Name())
+			fm.file.Close()
+			continue
+		}
 		if err != nil {
 			log.Print("Error reading signature from file", fm.file.Name())
 			return err
 		}
 		fm.signature = sig
+		nonEmptyFiles = append(nonEmptyFiles, fm)
 	}
+	lr.files = nonEmptyFiles
 	return
 }
 
