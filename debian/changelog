@@ -1,3 +1,9 @@
+logpump (0.1.2) unstable; urgency=low
+
+  * Per-pattern prefix support.
+
+ -- Artyom Pervukhin <artyom@evasive.ru>  Mon, 02 Sep 2013 17:34:29 +0400
+
 logpump (0.1.1) unstable; urgency=low
 
   * Skip on empty logfiles, do not fail.

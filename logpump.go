@@ -77,7 +77,11 @@ FEEDING_LOOP:
 				// (probably logfiles were not found)
 				break FEEDING_LOOP
 			}
-			msg.Text = line.text
+			if cfg.Prefix != "" {
+				msg.Text = fmt.Sprintf("%s: %s", cfg.Prefix, line.text)
+			} else {
+				msg.Text = line.text
+			}
 			l <- msg
 			//log.Print("waiting for status")
 			res := <-msg.Status
@@ -287,6 +291,7 @@ const OK, FAIL status = 0, 1
 type Cfg struct {
 	Pattern   string
 	Statefile string
+	Prefix    string
 }
 
 type fileMeta struct {

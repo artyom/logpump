@@ -16,11 +16,12 @@ Configuration file example:
 		},
 		{
 			"Pattern":"/var/log/daemon.log*",
-			"Statefile":"/var/cache/logpump/daemon_state.json"
+			"Statefile":"/var/cache/logpump/daemon_state.json",
+			"Prefix":"DAEMONLOG"
 		}
 	]
 
-This configuration tells logpump to watch for messages in files `/var/log/messages*` and `/var/log/daemon.log*` and push them to Scribe server, saving state to files `/var/cache/logpump/messages_state.json` and `/var/cache/logpump/daemon_state.json` respectively.
+This configuration tells logpump to watch for messages in files `/var/log/messages*` and `/var/log/daemon.log*` and push them to Scribe server, saving state to files `/var/cache/logpump/messages_state.json` and `/var/cache/logpump/daemon_state.json` respectively. Messages from `daemon.log` would have prefix "`DAEMONLOG: `" appended to them.
 
 ## Features
 
