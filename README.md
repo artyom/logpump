@@ -22,16 +22,24 @@ Configuration file example:
 		}
 	]
 
-This configuration tells logpump to watch for messages in files `/var/log/messages*` and `/var/log/daemon.log*` and push them to Scribe server, saving state to files `/var/cache/logpump/messages_state.json` and `/var/cache/logpump/daemon_state.json` respectively. Messages from `daemon.log` would have prefix "`DAEMONLOG: `" appended to them, and category `important` assigned.
+This configuration tells logpump to watch for messages in files
+`/var/log/messages*` and `/var/log/daemon.log*` and push them to Scribe server,
+saving state to files `/var/cache/logpump/messages_state.json` and
+`/var/cache/logpump/daemon_state.json` respectively. Messages from `daemon.log`
+would have prefix "`DAEMONLOG: `" appended to them, and category `important`
+assigned.
 
 ## Features
 
-* State persistence: logpump can be safely stopped and started again, it would read only previously unread log messages.
+* State persistence: logpump can be safely stopped and started again, it would
+  read only previously unread log messages.
 * Logfiles rotation recognized, even between logpump runs.
 * gzip/bzip2 compressed files support.
-* Automatic reconnect to Scribe server: try hard to reconnect in case of network problems.
+* Automatic reconnect to Scribe server: try hard to reconnect in case of
+  network problems.
 * Automatic message resubmit if Scribe answered "TRY LATER".
-* Session statistics: total messages sent, connection retries, message resubmits.
+* Session statistics: total messages sent, connection retries, message
+  resubmits.
 
 ## Bugs
 
