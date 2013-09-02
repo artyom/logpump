@@ -1,4 +1,11 @@
 [
-{"Pattern":"/tmp/log/log*","Statefile":"/tmp/state.json", "Prefix":"SomePrefix"},
-{"Pattern":"/tmp/log2/log*","Statefile":"/tmp/state2.json"}
+	{
+		"Pattern": "/tmp/log/log*",
+		"Statefile": "/tmp/state.json",
+		"Prefix": "SomePrefix"
+	},
+	{
+		"Pattern": "/tmp/log2/log*",
+		"Statefile": "/tmp/state2.json"
+	}
 ]
