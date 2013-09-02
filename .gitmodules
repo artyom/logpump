@@ -1,0 +1,12 @@
+[submodule "dependencies/github.com/artyom/logreader"]
+	path = dependencies/github.com/artyom/logreader
+	url = https://github.com/artyom/logreader.git
+[submodule "dependencies/github.com/artyom/thrift"]
+	path = dependencies/github.com/artyom/thrift
+	url = https://github.com/artyom/thrift.git
+[submodule "dependencies/github.com/artyom/scribe"]
+	path = dependencies/github.com/artyom/scribe
+	url = https://github.com/artyom/scribe.git
+[submodule "dependencies/github.com/artyom/fb303"]
+	path = dependencies/github.com/artyom/fb303
+	url = https://github.com/artyom/fb303.git
