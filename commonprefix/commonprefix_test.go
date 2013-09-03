@@ -8,6 +8,8 @@ var testCases = []struct {
 }{
 	{[]string{"/var/log/foo", "/var/log/foo.1", "/var/log/foo.gz"}, "/var/log/foo"},
 	{[]string{"/hello", "/hola"}, "/h"},
+	{[]string{"/hello", "/h"}, "/h"},
+	{[]string{"/h", "/hello"}, "/h"},
 	{[]string{}, ""},
 	{[]string{"", "/bar"}, ""},
 	{[]string{"A", ""}, ""},

@@ -7,11 +7,8 @@ func CommonPrefix(p []string) string {
 	}
 	prefixlen := len(p[0])
 	for _, v := range p {
-		if len(v) == 0 {
-			return ""
-		}
 		for i := 0; i < prefixlen; i++ {
-			if v[i] != p[0][i] {
+			if len(v) < i+1 || v[i] != p[0][i] {
 				prefixlen = i
 				break
 			}
