@@ -1,3 +1,10 @@
+logpump (0.1.5) unstable; urgency=low
+
+  * Memory consumption reduced drastically for high message rates.
+  * -reconnectforever option: try to (re)connect indefinitely.
+
+ -- Artyom Pervukhin <artyom@evasive.ru>  Tue, 03 Sep 2013 14:28:48 +0400
+
 logpump (0.1.4) unstable; urgency=low
 
   * Use hostname as a default prefix (can be disabled with -nodefaulthostname
