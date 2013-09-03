@@ -43,7 +43,23 @@ assigned.
 * Session statistics: total messages sent, connection retries, message
   resubmits.
 
-## Bugs
+## Usage Examples
+
+	logpump -host 192.168.0.1 -conffile /etc/logpump.json -reconnectforever
+
+This would start logpump in "reconnect forever" mode: it would indefinitely try
+to (re)connect to remote server. Use with care, this mode can mask potential
+network misconfigurations.
+
+	logpump -host 192.168.0.1 -conffile /etc/logpump.json -nohostnameprefix
+
+By default, each line sent is prefixed with host name unless prefix is
+overridden in `config.json`. Option `-nohostnameprefix` disables this behavior,
+so no prefix is added to log lines unless set in configuration file.
+
+`logpump` writes diagnostic messages to stderr, as well as periodic statistics
+on total messages sent, reconnects and retries (Scribe server asked to try
+later).
 
 
 [Scribe]: https://github.com/facebook/scribe
