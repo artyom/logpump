@@ -85,6 +85,7 @@ func Feeder(cfg Cfg, l chan<- *Msg, done chan<- bool) {
 
 FEEDING_LOOP:
 	for {
+		timeOut := time.NewTimer(2 * time.Minute)
 		select {
 		case line, ok := <-lines:
 			if !ok {
@@ -110,13 +111,14 @@ FEEDING_LOOP:
 				line.ok <- false
 				//log.Print("false sent to line.ok")
 			}
-		case <-time.After(2 * time.Minute):
+		case <-timeOut.C:
 			// re-init if we don't receive any data for a while
 			// (trying to detect log rotation)
 			doInit <- true
 		case <-shouldFinish:
 			break FEEDING_LOOP
 		}
+		timeOut.Stop() // stop timer so it can be garbage collected
 	}
 	done <- true
 	log.Printf("[%s] Feeder terminated", cfg.Pattern)
