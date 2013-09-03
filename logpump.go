@@ -23,6 +23,8 @@ import (
 	"time"
 )
 
+var reconnectForever bool
+
 func main() {
 	var port uint
 	var host, filename string
@@ -32,6 +34,7 @@ func main() {
 	flag.StringVar(&host, "host", "localhost", "scribe host")
 	flag.StringVar(&filename, "conffile", "", "configuration file")
 	flag.BoolVar(&noHostnamePrefix, "nohostnameprefix", false, "do not set hostname as a default prefix")
+	flag.BoolVar(&reconnectForever, "reconnectforever", false, "try to reconnect forever instead of default 10 retries")
 
 	flag.Parse()
 
@@ -204,15 +207,25 @@ func Scriber(host string, port uint, l <-chan *Msg) {
 	log.Print("Scriber spawned")
 
 	var sentOk, reconnects, retries uint64
+	var retryLoopIdx uint8 = 0
 	var res scribe.ResultCode
 	var sc *client
 	var err error
 	conns := make(chan *client, 1)
 
-	for i := 0; i < 10; i++ {
+	for {
 		sc, err = getScribeClient(host, port)
 		if err == nil {
 			break
+		}
+		reconnects += 1
+		if !reconnectForever && retryLoopIdx == 10 {
+			break
+		}
+		log.Printf("Trying to reconnect in %d seconds", retryLoopIdx)
+		time.Sleep(time.Second * time.Duration(retryLoopIdx))
+		if retryLoopIdx < 10 {
+			retryLoopIdx += 1
 		}
 	}
 	if err != nil {
@@ -232,7 +245,8 @@ func Scriber(host string, port uint, l <-chan *Msg) {
 			logentry.Category = msg.Category
 		SENDLOOP:
 			for {
-				for i := 0; i < 10; i++ {
+				retryLoopIdx = 0
+				for {
 					select {
 					case sc = <-conns:
 						// trying to get alive connection from pool
@@ -263,8 +277,19 @@ func Scriber(host string, port uint, l <-chan *Msg) {
 					if err != nil {
 						log.Print(err)
 					}
-					log.Printf("Trying to reconnect in %d seconds", i)
-					time.Sleep(time.Second * time.Duration(i))
+					// if we don't want to reconnect
+					// forever and already have 10
+					// unsuccessful retries, break loop and
+					// fail
+					if !reconnectForever && retryLoopIdx == 10 {
+						break
+					}
+					log.Printf("Trying to reconnect in %d seconds", retryLoopIdx)
+					time.Sleep(time.Second * time.Duration(retryLoopIdx))
+					// update retryLoopIdx up to 10
+					if retryLoopIdx < 10 {
+						retryLoopIdx += 1
+					}
 				}
 				if err != nil {
 					log.Fatal("Failed to recover connection and send message", err)

@@ -7,6 +7,7 @@ Logpump follows syslog files and pushes messages to [Scribe][].
 	  -host="localhost": scribe host
 	  -nohostnameprefix=false: do not set hostname as a default prefix
 	  -port=1463: scribe port
+	  -reconnectforever=false: try to reconnect forever instead of default 10 retries
 
 Configuration file example:
 
