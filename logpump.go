@@ -26,10 +26,12 @@ import (
 func main() {
 	var port uint
 	var host, filename string
+	var noHostnamePrefix bool
 
 	flag.UintVar(&port, "port", 1463, "scribe port")
 	flag.StringVar(&host, "host", "localhost", "scribe host")
 	flag.StringVar(&filename, "conffile", "", "configuration file")
+	flag.BoolVar(&noHostnamePrefix, "nohostnameprefix", false, "do not set hostname as a default prefix")
 
 	flag.Parse()
 
@@ -50,8 +52,18 @@ func main() {
 	l := make(chan *Msg, len(*sections))
 	go Scriber(host, port, l)
 
+	hostname, err := os.Hostname()
+	if err != nil {
+		log.Print("Failed to get hostname", err)
+		noHostnamePrefix = true
+	}
+
 	done := make(chan bool, len(*sections))
 	for _, cfg := range *sections {
+		// update empty prefixes if we're ok to use hostname as default one
+		if !noHostnamePrefix && cfg.Prefix == "" {
+			cfg.Prefix = hostname
+		}
 		go Feeder(cfg, l, done)
 	}
 

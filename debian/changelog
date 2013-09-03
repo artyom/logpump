@@ -1,3 +1,10 @@
+logpump (0.1.4) unstable; urgency=low
+
+  * Use hostname as a default prefix (can be disabled with -nodefaulthostname
+    option).
+
+ -- Artyom Pervukhin <artyom@evasive.ru>  Tue, 03 Sep 2013 12:25:59 +0400
+
 logpump (0.1.3) unstable; urgency=low
 
   * Per-pattern category support.
