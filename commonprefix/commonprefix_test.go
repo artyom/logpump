@@ -10,6 +10,7 @@ var testCases = []struct {
 	{[]string{"/hello", "/hola"}, "/h"},
 	{[]string{}, ""},
 	{[]string{"", "/bar"}, ""},
+	{[]string{"A", ""}, ""},
 	{[]string{"A", "B"}, ""},
 }
 
