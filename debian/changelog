@@ -1,3 +1,9 @@
+logpump (0.1.6) unstable; urgency=low
+
+  * Dependencies updated: fixed rare panic on sort operations.
+
+ -- Artyom Pervukhin <artyom@evasive.ru>  Tue, 03 Sep 2013 16:13:37 +0400
+
 logpump (0.1.5) unstable; urgency=low
 
   * Memory consumption reduced drastically for high message rates.
