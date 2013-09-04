@@ -48,11 +48,11 @@ func main() {
 		log.Fatal("Failed to read config", err)
 	}
 
-	if len(*sections) == 0 {
+	if len(sections) == 0 {
 		log.Fatal("Empty configuration, nothing to do")
 	}
 
-	l := make(chan *Msg, len(*sections))
+	l := make(chan *Msg, len(sections))
 	go Scriber(host, port, l)
 
 	hostname, err := os.Hostname()
@@ -61,8 +61,8 @@ func main() {
 		noHostnamePrefix = true
 	}
 
-	done := make(chan bool, len(*sections))
-	for _, cfg := range *sections {
+	done := make(chan bool, len(sections))
+	for _, cfg := range sections {
 		// update empty prefixes if we're ok to use hostname as default one
 		if !noHostnamePrefix && cfg.Prefix == "" {
 			cfg.Prefix = hostname
@@ -71,7 +71,7 @@ func main() {
 	}
 
 	// wait for completion
-	for _ = range *sections {
+	for _ = range sections {
 		<-done
 	}
 	log.Print("Bye")
@@ -606,17 +606,23 @@ func usage() {
 	flag.PrintDefaults()
 }
 
-func readConfig(filename string) (*[]Cfg, error) {
+func readConfig(filename string) ([]Cfg, error) {
 	dat, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
-	conf := new([]Cfg)
-	err = json.Unmarshal(dat, conf)
+	conf := []Cfg{}
+	err = json.Unmarshal(dat, &conf)
 	if err != nil {
 		return nil, err
 	}
-	return conf, nil
+	conf2 := []Cfg{}
+	for _, v := range conf {
+		if v.Pattern != "" {
+			conf2 = append(conf2, v)
+		}
+	}
+	return conf2, nil
 }
 
 type client struct {
