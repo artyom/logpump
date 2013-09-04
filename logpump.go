@@ -164,6 +164,7 @@ func NewLineEmitter(cfg Cfg, done chan<- bool) (lines chan *confirmedLine, doIni
 	go func() {
 		br := bufio.NewReader(lr)
 		line := newConfirmedLine()
+		firstLine := false
 		for {
 			select {
 			case <-doInit:
@@ -180,6 +181,10 @@ func NewLineEmitter(cfg Cfg, done chan<- bool) (lines chan *confirmedLine, doIni
 				line.text, err = br.ReadString('\n')
 				switch err {
 				case nil:
+					if firstLine {
+						firstLine = false
+						lr.state.Signature = signature(line.text)
+					}
 					for {
 						lines <- line
 						//log.Print("reading line.ok...")
@@ -193,6 +198,10 @@ func NewLineEmitter(cfg Cfg, done chan<- bool) (lines chan *confirmedLine, doIni
 						time.Sleep(time.Second)
 					}
 				case io.EOF:
+					// next successfully read line would be the first line in file
+					if lr.state.Signature == "" {
+						firstLine = true
+					}
 					time.Sleep(time.Millisecond * 300)
 				default:
 					log.Fatalf("[%s] %s", cfg.Pattern, err)
@@ -408,9 +417,14 @@ func (lr *LogReader) Init() (err error) {
 	if err != nil {
 		return
 	}
+	if len(lr.files) == 0 {
+		log.Printf("[%s] Matched no non-empty files, would re-try in a while", lr.cfg.Pattern)
+		return nil
+	}
 
 	// close and forget already read files (to the left of the file with
 	// matching signature)
+	oldFileFound := false
 	idx := 0
 	for i, fm := range lr.files {
 		if lr.state.Signature != "" && lr.state.Signature == fm.signature {
@@ -418,6 +432,7 @@ func (lr *LogReader) Init() (err error) {
 				fm2.file.Close()
 			}
 			idx = i
+			oldFileFound = true
 			break
 		}
 	}
@@ -426,7 +441,7 @@ func (lr *LogReader) Init() (err error) {
 	}
 
 	// rewind current file & create reading wrapper
-	if lr.state.Signature != "" && lr.state.Position > 0 && lr.files[0].signature == lr.state.Signature {
+	if oldFileFound && lr.state.Signature != "" && lr.state.Position > 0 {
 		if !strings.HasSuffix(lr.files[0].file.Name(), ".gz") && !strings.HasSuffix(lr.files[0].file.Name(), ".bz2") {
 			lr.files[0].file.Seek(lr.state.Position, os.SEEK_SET)
 			lr.files[0].reader = io.Reader(lr.files[0].file)
@@ -461,6 +476,11 @@ func (lr *LogReader) Init() (err error) {
 		}
 		f.reader = r
 	}
+	// reset previously loaded state if that file cannot be found
+	if !oldFileFound && len(lr.files) > 0 {
+		lr.state.Signature = lr.files[0].signature
+		lr.state.Position = 0
+	}
 
 	// all ok, ready to read data
 	return nil
@@ -483,6 +503,7 @@ func (lr *LogReader) getSignatures() (err error) {
 			return err
 		}
 		fm.signature = sig
+		log.Printf("file: %s\tsignature: %s", fm.file.Name(), fm.signature)
 		nonEmptyFiles = append(nonEmptyFiles, fm)
 	}
 	lr.files = nonEmptyFiles
@@ -526,6 +547,11 @@ func (lr *LogReader) Confirm(n int64) int64 {
 // XXX this won't work as we have both gzipped and plain text files
 // we should operate on wrapping readers instead
 func (lr *LogReader) Read(b []byte) (n int, err error) {
+	// we don't have any files to read yet (only empty files matched
+	// pattern, should wait for next re-init call)
+	if len(lr.files) == 0 {
+		return 0, io.EOF
+	}
 	for len(lr.files) > 1 {
 		// DEBUG
 		//log.Printf("%T, %+v", lr.files[0], lr.files[0])
