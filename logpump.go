@@ -503,7 +503,6 @@ func (lr *LogReader) getSignatures() (err error) {
 			return err
 		}
 		fm.signature = sig
-		log.Printf("file: %s\tsignature: %s", fm.file.Name(), fm.signature)
 		nonEmptyFiles = append(nonEmptyFiles, fm)
 	}
 	lr.files = nonEmptyFiles
