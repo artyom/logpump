@@ -74,13 +74,14 @@ func main() {
 	for _ = range *sections {
 		<-done
 	}
+	log.Print("Bye")
 	return
 }
 
 func Feeder(cfg Cfg, l chan<- *Msg, done chan<- bool) {
 	log.Printf("[%s] Feeder spawned", cfg.Pattern)
 	// lines and doInit are channels
-	lines, doInit, shouldFinish := NewLineEmitter(cfg)
+	lines, doInit := NewLineEmitter(cfg, done)
 	msg := NewMsg("")
 	if cfg.Category != "" {
 		msg.Category = cfg.Category
@@ -118,13 +119,9 @@ FEEDING_LOOP:
 			// re-init if we don't receive any data for a while
 			// (trying to detect log rotation)
 			doInit <- true
-		case <-shouldFinish:
-			break FEEDING_LOOP
 		}
 		timeOut.Stop() // stop timer so it can be garbage collected
 	}
-	done <- true
-	log.Printf("[%s] Feeder terminated", cfg.Pattern)
 }
 
 type confirmedLine struct {
@@ -140,32 +137,35 @@ func newConfirmedLine() *confirmedLine {
 }
 
 // NewLineEmitter abstracts file read operations, position handling, etc.
-func NewLineEmitter(cfg Cfg) (lines chan *confirmedLine, doInit chan bool, shouldFinish chan bool) {
+func NewLineEmitter(cfg Cfg, done chan<- bool) (lines chan *confirmedLine, doInit chan bool) {
 	doSave := time.Tick(3 * time.Minute)
 	doInit = make(chan bool, 1)
-	shouldFinish = make(chan bool, 1)
 	lines = make(chan *confirmedLine)
+	lr, err := NewLogReader(cfg)
+	if err != nil {
+		// Probably no logfiles were found, no data to feed
+		// lines channel with
+		log.Print(err)
+		close(lines)
+		done <- true
+		return
+	}
+	shutdownRequest := make(chan os.Signal, 1)
+	signal.Notify(shutdownRequest, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
-		lr, err := NewLogReader(cfg)
-		if err != nil {
-			// Probably no logfiles were found, no data to feed
-			// lines channel with
-			log.Print(err)
-			close(lines)
-			return
-		}
+		sig := <-shutdownRequest
+		log.Printf("[%s] Shutdown requested (%s), saving state and finishing", cfg.Pattern, sig)
+		lr.SaveState()
+		lr.Close()
+		done <- true
+		return
+
+	}()
+	go func() {
 		br := bufio.NewReader(lr)
 		line := newConfirmedLine()
-		shutdownRequest := make(chan os.Signal, 1)
-		signal.Notify(shutdownRequest, syscall.SIGINT, syscall.SIGTERM)
 		for {
 			select {
-			case sig := <-shutdownRequest:
-				log.Printf("[%s] Shutdown requested (%s), saving state and finishing", cfg.Pattern, sig)
-				lr.SaveState()
-				lr.Close()
-				shouldFinish <- true
-				return
 			case <-doInit:
 				log.Printf("[%s] No new data were found for a while, saving state and re-initing", cfg.Pattern)
 				lr.SaveState()
@@ -506,7 +506,6 @@ func (lr *LogReader) loadState() (err error) {
 
 // Dump state to file
 func (lr *LogReader) SaveState() (err error) {
-	lr.state.Signature = lr.files[0].signature
 	dat, err := json.Marshal(lr.state)
 	if err != nil {
 		return
@@ -539,6 +538,11 @@ func (lr *LogReader) Read(b []byte) (n int, err error) {
 		}
 		lr.files[0].file.Close()
 		lr.files = lr.files[1:]
+		// TODO there's a tiny chance of race condition between
+		// changing this two lr.state fields and reading them in
+		// SaveState() method. It's probably better to protect these
+		// with lock
+		lr.state.Signature = lr.files[0].signature
 		atomic.StoreInt64(&lr.state.Position, 0)
 	}
 	// XXX check if this works correctly
