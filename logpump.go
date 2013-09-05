@@ -27,11 +27,13 @@ var reconnectForever bool
 
 func main() {
 	var port uint
+	var stateDir string
 	var host, filename string
 	var noHostnamePrefix bool
 
 	flag.UintVar(&port, "port", 1463, "scribe port")
 	flag.StringVar(&host, "host", "localhost", "scribe host")
+	flag.StringVar(&stateDir, "statedir", "", "directory to save state files if none was given in config")
 	flag.StringVar(&filename, "conffile", "", "configuration file")
 	flag.BoolVar(&noHostnamePrefix, "nohostnameprefix", false, "do not set hostname as a default prefix")
 	flag.BoolVar(&reconnectForever, "reconnectforever", false, "try to reconnect forever instead of default 10 retries")
@@ -66,6 +68,11 @@ func main() {
 		// update empty prefixes if we're ok to use hostname as default one
 		if !noHostnamePrefix && cfg.Prefix == "" {
 			cfg.Prefix = hostname
+		}
+		// if no Statefile was given in config and -statedir parameter
+		// is present, use auto-generated from pattern statefile names
+		if cfg.Statefile == "" && stateDir != "" {
+			cfg.Statefile = filepath.Join(stateDir, fmt.Sprintf("logpump-%s.state", signature(cfg.Pattern)))
 		}
 		go Feeder(cfg, l, done)
 	}
@@ -511,6 +518,9 @@ func (lr *LogReader) getSignatures() (err error) {
 
 // Load state from file
 func (lr *LogReader) loadState() (err error) {
+	if lr.cfg.Statefile == "" {
+		return fmt.Errorf("Neither Statefile nor -statedir option was given")
+	}
 	dat, err := ioutil.ReadFile(lr.cfg.Statefile)
 	if err != nil {
 		return
@@ -526,6 +536,9 @@ func (lr *LogReader) loadState() (err error) {
 
 // Dump state to file
 func (lr *LogReader) SaveState() (err error) {
+	if lr.cfg.Statefile == "" {
+		return fmt.Errorf("No state file specified, nowhere to save")
+	}
 	dat, err := json.Marshal(lr.state)
 	if err != nil {
 		return

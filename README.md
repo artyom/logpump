@@ -8,6 +8,8 @@ Logpump follows syslog files and pushes messages to [Scribe][].
 	  -nohostnameprefix=false: do not set hostname as a default prefix
 	  -port=1463: scribe port
 	  -reconnectforever=false: try to reconnect forever instead of default 10 retries
+	  -statedir="": directory to save state files if none was given in config
+
 
 Configuration file example:
 
@@ -56,6 +58,12 @@ network misconfigurations.
 By default, each line sent is prefixed with host name unless prefix is
 overridden in `config.json`. Option `-nohostnameprefix` disables this behavior,
 so no prefix is added to log lines unless set in configuration file.
+
+	logpump -host 192.168.0.1 -conffile /etc/logpump.json -statedir /var/cache/logpump
+
+If no Statefile option specified for any Pattern in configuration file,
+statefile name would be automatically generated from pattern; the file would be
+loaded/saved to/from directory given with `-statedir` option.
 
 `logpump` writes diagnostic messages to stderr, as well as periodic statistics
 on total messages sent, reconnects and retries (Scribe server asked to try
