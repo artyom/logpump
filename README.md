@@ -20,6 +20,7 @@ Configuration file example:
 		},
 		{
 			"Pattern":"/var/log/daemon.log*",
+			"CheckRotate": "1m30s",
 			"Statefile":"/var/cache/logpump/daemon_state.json",
 			"Category": "important",
 			"Prefix":"DAEMONLOG"
@@ -32,6 +33,10 @@ saving state to files `/var/cache/logpump/messages_state.json` and
 `/var/cache/logpump/daemon_state.json` respectively. Messages from `daemon.log`
 would have prefix "`DAEMONLOG: `" appended to them, and category `important`
 assigned.
+
+If no new messages seen in `daemon.log` for 1.5 minutes, matching files are
+re-checked for rotation. This delay defaults to 2 minutes, min. allowed value
+20s.
 
 ## Features
 

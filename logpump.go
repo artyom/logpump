@@ -6,9 +6,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/artyom/logreader"
-	"github.com/artyom/scribe"
-	"github.com/artyom/thrift"
 	"io"
 	"io/ioutil"
 	"log"
@@ -21,6 +18,10 @@ import (
 	"sync/atomic"
 	"syscall"
 	"time"
+
+	"github.com/artyom/logreader"
+	"github.com/artyom/scribe"
+	"github.com/artyom/thrift"
 )
 
 var reconnectForever bool
@@ -74,6 +75,12 @@ func main() {
 		if cfg.Statefile == "" && stateDir != "" {
 			cfg.Statefile = filepath.Join(stateDir, fmt.Sprintf("logpump-%s.state", signature(cfg.Pattern)))
 		}
+		switch {
+		case cfg.CheckRotate == 0:
+			cfg.CheckRotate = defaultCheckRotate
+		case cfg.CheckRotate < minCheckRotate:
+			cfg.CheckRotate = minCheckRotate
+		}
 		go Feeder(cfg, l, done)
 	}
 
@@ -96,7 +103,7 @@ func Feeder(cfg Cfg, l chan<- *Msg, done chan<- bool) {
 
 FEEDING_LOOP:
 	for {
-		timeOut := time.NewTimer(2 * time.Minute)
+		timeOut := time.NewTimer(cfg.CheckRotate)
 		select {
 		case line, ok := <-lines:
 			if !ok {
@@ -345,13 +352,42 @@ func NewMsg(s string) *Msg {
 
 type status int
 
+const (
+	defaultCheckRotate = 2 * time.Minute
+	minCheckRotate     = 20 * time.Second
+)
+
 const OK, FAIL status = 0, 1
 
 type Cfg struct {
-	Pattern   string
-	Statefile string
-	Category  string
-	Prefix    string
+	Pattern     string
+	Statefile   string
+	Category    string
+	Prefix      string
+	CheckRotate time.Duration
+}
+
+func (cfg *Cfg) UnmarshalJSON(data []byte) error {
+	c := struct {
+		Pattern     string
+		Statefile   string
+		Category    string
+		Prefix      string
+		CheckRotate string
+	}{}
+	if err := json.Unmarshal(data, &c); err != nil {
+		return err
+	}
+	dur, err := time.ParseDuration(c.CheckRotate)
+	if err != nil {
+		return err
+	}
+	cfg.Pattern = c.Pattern
+	cfg.Statefile = c.Statefile
+	cfg.Category = c.Category
+	cfg.Prefix = c.Prefix
+	cfg.CheckRotate = dur
+	return nil
 }
 
 type fileMeta struct {
