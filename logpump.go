@@ -379,9 +379,15 @@ func (cfg *Cfg) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &c); err != nil {
 		return err
 	}
-	dur, err := time.ParseDuration(c.CheckRotate)
-	if err != nil {
-		return err
+	var (
+		dur time.Duration
+		err error
+	)
+	if len(c.CheckRotate) > 0 {
+		dur, err = time.ParseDuration(c.CheckRotate)
+		if err != nil {
+			return err
+		}
 	}
 	cfg.Pattern = c.Pattern
 	cfg.Statefile = c.Statefile
