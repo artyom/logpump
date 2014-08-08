@@ -2,8 +2,8 @@
 
 Logpump follows syslog files and pushes messages to [Scribe][].
 
-	Usage: logpump -host <host> -port <port> -conffile <config.json>
-	  -conffile="": configuration file
+	Usage: logpump -host <host> -port <port> -conffile <config.(json|yaml)>
+	  -conffile="": configuration file (json or yaml)
 	  -host="localhost": scribe host
 	  -nohostnameprefix=false: do not set hostname as a default prefix
 	  -port=1463: scribe port
@@ -11,7 +11,7 @@ Logpump follows syslog files and pushes messages to [Scribe][].
 	  -statedir="": directory to save state files if none was given in config
 
 
-Configuration file example:
+Configuration file example (json):
 
 	[
 		{
@@ -37,6 +37,19 @@ assigned.
 If no new messages seen in `daemon.log` for 1.5 minutes, matching files are
 re-checked for rotation. This delay defaults to 2 minutes, min. allowed value
 20s.
+
+The same configuration in yaml format:
+
+	-
+	  pattern: /var/log/messages*
+	  statefile: /var/cache/logpump/messages_state.json
+
+	-
+	  pattern: /var/log/daemon.log*
+	  checkrotate: 1m30s
+	  statefile: /var/cache/logpump/daemon_state.json
+	  category: important
+	  prefix: DAEMONLOG
 
 ## Features
 

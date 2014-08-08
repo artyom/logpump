@@ -11,7 +11,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -22,6 +21,7 @@ import (
 	"github.com/artyom/logreader"
 	"github.com/artyom/scribe"
 	"github.com/artyom/thrift"
+	"gopkg.in/yaml.v1"
 )
 
 var reconnectForever bool
@@ -35,7 +35,7 @@ func main() {
 	flag.UintVar(&port, "port", 1463, "scribe port")
 	flag.StringVar(&host, "host", "localhost", "scribe host")
 	flag.StringVar(&stateDir, "statedir", "", "directory to save state files if none was given in config")
-	flag.StringVar(&filename, "conffile", "", "configuration file")
+	flag.StringVar(&filename, "conffile", "", "configuration file (json or yaml)")
 	flag.BoolVar(&noHostnamePrefix, "nohostnameprefix", false, "do not set hostname as a default prefix")
 	flag.BoolVar(&reconnectForever, "reconnectforever", false, "try to reconnect forever instead of default 10 retries")
 
@@ -652,7 +652,9 @@ func signature(s string) string {
 }
 
 func usage() {
-	fmt.Fprintf(os.Stderr, "Usage: %s -host <host> -port <port> -conffile <config.json>\n", path.Base(os.Args[0]))
+	fmt.Fprintf(os.Stderr,
+		"Usage: %s -host <host> -port <port> -conffile <config.(json|yaml)>\n",
+		filepath.Base(os.Args[0]))
 	flag.PrintDefaults()
 }
 
@@ -662,7 +664,12 @@ func readConfig(filename string) ([]Cfg, error) {
 		return nil, err
 	}
 	conf := []Cfg{}
-	err = json.Unmarshal(dat, &conf)
+	switch filepath.Ext(filename) {
+	case ".yaml", ".yml":
+		err = yaml.Unmarshal(dat, &conf)
+	default:
+		err = json.Unmarshal(dat, &conf)
+	}
 	if err != nil {
 		return nil, err
 	}
