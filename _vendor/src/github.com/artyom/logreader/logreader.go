@@ -3,13 +3,15 @@ package logreader
 import (
 	"compress/bzip2"
 	"compress/gzip"
-	. "github.com/artyom/logreader/commonprefix"
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
+
+	. "github.com/artyom/logreader/commonprefix"
 )
 
 // A LogReader reads data from separate log files as a whole. Files with
@@ -39,7 +41,7 @@ func NewPlainTextReader(f *os.File) (io.Reader, error) {
 	return f, nil
 }
 
-// NewPlainTextReader returns new Reader as well as error. Reader is the
+// NewLogReader returns new Reader as well as error. Reader is the
 // logical concatenation of the log files matching the pattern provided.
 // They're read sequentially. Once all inputs are drained, Read will return
 // EOF.
@@ -48,7 +50,20 @@ func NewLogReader(pattern string) (l *LogReader, err error) {
 	if err != nil {
 		return nil, err
 	}
-	sort.Sort(sort.Reverse(LogNameSlice(logfiles)))
+
+	switch {
+	case IsSvlogd(logfiles):
+		logfiles = FilterSvlogdSpecial(logfiles)
+		// svlogd logs have increasing counter
+		sort.Sort(LogNameSlice(logfiles))
+	default:
+		// syslogd logs have decreasing counter
+		sort.Sort(sort.Reverse(LogNameSlice(logfiles)))
+	}
+	if len(logfiles) == 0 {
+		return nil, errors.New("pattern matched no files")
+	}
+
 	files := make([]*os.File, len(logfiles))
 	readers := make([]io.Reader, len(logfiles))
 	for i, v := range logfiles {
@@ -111,6 +126,16 @@ func (p LogNameSlice) Less(i, j int) bool {
 	left = strings.TrimPrefix(left, prefix)
 	right = strings.TrimPrefix(right, prefix)
 
+	// runit-compatible log
+	if strings.HasPrefix(left, "@") || strings.HasPrefix(right, "@") {
+		switch {
+		case left == "current":
+			return false
+		case right == "current":
+			return true
+		}
+	}
+
 	// trying to compare suffixes as digits
 	left_i, left_err := strconv.ParseUint(left, 10, 8)
 	right_i, right_err := strconv.ParseUint(right, 10, 8)
@@ -119,4 +144,37 @@ func (p LogNameSlice) Less(i, j int) bool {
 	}
 
 	return left < right
+}
+
+// IsSvlogd checks whether given logfiles looks like they are managed by svlogd
+// tool
+func IsSvlogd(logfiles []string) bool {
+	var n int
+	for _, item := range logfiles {
+		base := filepath.Base(item)
+		switch {
+		case base == "current" || base == "lock":
+			n++
+		case strings.HasPrefix(base, "@") && filepath.Ext(base) == "s":
+			n++
+		}
+	}
+	if n > 1 {
+		return true
+	}
+	return false
+}
+
+// FilterSvlogdSpecial filters out all files except for the "current" and "@*.s"
+func FilterSvlogdSpecial(logfiles []string) []string {
+	out := make([]string, 0)
+	for _, item := range logfiles {
+		base := filepath.Base(item)
+		switch {
+		case base == "current" ||
+			(strings.HasPrefix(base, "@") && filepath.Ext(base) == "s"):
+			out = append(out, item)
+		}
+	}
+	return out
 }
