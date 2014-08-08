@@ -1,3 +1,9 @@
+logpump (0.2.0) unstable; urgency=low
+
+  * svlogd-generated logfiles support.
+
+ -- Artyom Pervukhin <artyom@evasive.ru>  Fri, 08 Aug 2014 16:30:40 +0400
+
 logpump (0.1.9) unstable; urgency=low
 
   * Customize rotate detection delay with CheckRotate config option.

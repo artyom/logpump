@@ -53,6 +53,7 @@ The same configuration in yaml format:
 
 ## Features
 
+* syslogd / svlogd naming formats support (see svlogd support notes below).
 * State persistence: logpump can be safely stopped and started again, it would
   read only previously unread log messages.
 * Logfiles rotation recognized, even between logpump runs.
@@ -86,6 +87,10 @@ loaded/saved to/from directory given with `-statedir` option.
 `logpump` writes diagnostic messages to stderr, as well as periodic statistics
 on total messages sent, reconnects and retries (Scribe server asked to try
 later).
+
+## svlogd support
+
+If you use svlogd to write logs (like `svlogd /path/to/dir`), you can also use logpump to pipe them into scribe. Just give it `/path/to/dir/*` as patten and it would handle files properly.
 
 ## Setup
 

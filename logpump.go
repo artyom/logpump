@@ -438,10 +438,20 @@ func (lr *LogReader) Init() (err error) {
 	if err != nil {
 		return
 	}
+
+	switch {
+	case logreader.IsSvlogd(logfiles):
+		logfiles = logreader.FilterSvlogdSpecial(logfiles)
+		// svlogd logs have increasing counter
+		sort.Sort(logreader.LogNameSlice(logfiles))
+	default:
+		// syslogd logs have decreasing counter
+		sort.Sort(sort.Reverse(logreader.LogNameSlice(logfiles)))
+	}
+
 	if logfiles == nil {
 		return fmt.Errorf("Pattern '%s' matched no files", lr.cfg.Pattern)
 	}
-	sort.Sort(sort.Reverse(logreader.LogNameSlice(logfiles)))
 
 	// re-initialize lr.files - it may not be empty on successive Init() calls
 	lr.files = lr.files[:0]
