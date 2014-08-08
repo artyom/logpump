@@ -87,5 +87,17 @@ loaded/saved to/from directory given with `-statedir` option.
 on total messages sent, reconnects and retries (Scribe server asked to try
 later).
 
+## Setup
+
+Via `go get`:
+
+	go get -u -v github.com/artyom/logpump
+
+If any dependencies are broken, use vendored copies:
+
+	cd $GOPATH/src/github.com/artyom/logpump
+	GOPATH=$PWD/_vendor:$GOPATH go install -v
+
+On Debian/Ubuntu you can build deb package with `dpkg-buildpackage`.
 
 [Scribe]: https://github.com/facebook/scribe

@@ -6,7 +6,7 @@ all: logpump
 
 logpump: logpump.go
 	mkdir -p $(GOPATH)/src $(GOPATH)/bin $(GOPATH)/pkg
-	find dependencies -maxdepth 1 -mindepth 1 -type d -exec cp -a '{}' $(GOPATH)/src \;
+	find _vendor/src -maxdepth 1 -mindepth 1 -type d -exec cp -a '{}' $(GOPATH)/src \;
 	mkdir -p $(TMPSRC)
 	cp -av $< $(TMPSRC)
 	go build -v $(PPATH)
