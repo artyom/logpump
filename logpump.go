@@ -101,9 +101,10 @@ func Feeder(cfg Cfg, l chan<- *Msg, done chan<- bool) {
 		msg.Category = cfg.Category
 	}
 
+	timeOut := time.NewTimer(cfg.CheckRotate)
+	defer timeOut.Stop()
 FEEDING_LOOP:
 	for {
-		timeOut := time.NewTimer(cfg.CheckRotate)
 		select {
 		case line, ok := <-lines:
 			if !ok {
@@ -134,7 +135,7 @@ FEEDING_LOOP:
 			// (trying to detect log rotation)
 			doInit <- true
 		}
-		timeOut.Stop() // stop timer so it can be garbage collected
+		timeOut.Reset(cfg.CheckRotate)
 	}
 }
 
